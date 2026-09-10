@@ -63,15 +63,15 @@ human-in-the-loop interrupt/resume via checkpointing.
                                            +-> :hold               (:hard? true)
 ```
 
-- `src/design/store.cljc` — `Store` protocol + `MemStore`:
+- `src/design/store.kotoba` — `Store` protocol + `MemStore`:
   registered projects/clients, committed design records, an append-only audit ledger.
-- `src/design/advisor.cljc` — `Advisor` protocol; `mock-advisor`
+- `src/design/advisor.kotoba` — `Advisor` protocol; `mock-advisor`
   (deterministic, default) proposes a design operation from a
   request; `llm-advisor` wraps a `langchain.model/ChatModel` — either
   way the advisor only ever produces a `:propose`-effect proposal,
   never a final production sign-off, and LLM parse failures always yield
   `confidence 0.0` (forces escalation, never fabricated confidence).
-- `src/design/governor.cljc` — `DesignGovernor/check`: a pure
+- `src/design/governor.kotoba` — `DesignGovernor/check`: a pure
   function, wired as its own `:govern` node. Hard invariants
   (unregistered project, a proposal whose `:effect` isn't `:propose`,
   any attempt to issue a production sign-off or certify compliance)
@@ -82,7 +82,7 @@ human-in-the-loop interrupt/resume via checkpointing.
   (`actor/approve!`), matching the README's robotics-premise statement
   that production sign-offs and compliance certification always remain the
   licensed designer's sole responsibility.
-- `src/design/actor.cljc` — `build-graph`, `run-request!`,
+- `src/design/actor.kotoba` — `build-graph`, `run-request!`,
   `approve!`: the `langgraph.graph/state-graph` wiring itself.
 
 ```bash
