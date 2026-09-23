@@ -89,6 +89,10 @@ human-in-the-loop interrupt/resume via checkpointing.
 kbb -M:test
 ```
 
+13 tests / 35 assertions green. `run_tests.kotoba` refuses (exit 2) to
+report a pass below that published count, on 0 sources, or on 0 test
+namespaces — a suite that ran nothing is not reported as green.
+
 This is what backs this repo's `:maturity :implemented` entry in
 [`kotoba-lang/occupation`](https://github.com/kotoba-lang/occupation).
 
