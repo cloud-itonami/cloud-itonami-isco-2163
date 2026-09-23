@@ -4,8 +4,11 @@
         ;; tools.deps takes the NEWEST sha it is shown, so without a floor here
         ;; this repo silently rides whatever a sibling happens to name.
         io.github.kotoba-lang/text {:git/sha "73bdb13ae7a3d004b44bca08be03a3191157a38f"}
-       io.github.kotoba-lang/langgraph
-        {:git/sha "5b4e5e70837b849b14b6a5800894e3be202ad5fa"}}
+        ;; Advanced past 5b4e5e7: that sha's transitive langchain/db.cljc does
+        ;; not analyze on the kbb engine, so the actor suite could not load.
+        ;; Kept in step with nbb.edn (the engine reads that file, not this one).
+        io.github.kotoba-lang/langgraph
+        {:git/sha "d6d57e960df17e5ce350672b0c8dcda7b3c79864"}}
  :aliases
  {
   ;; clj-kondo from deps (no binary), errors fail CI. Added because this repo
@@ -16,7 +19,9 @@
          :main-opts    ["-m" "clj-kondo.main"
                         "--lint" "src" "test"
                         "--fail-level" "error"]}
+  ;; run_tests.kotoba, not cognitect.test-runner: the runner resolves only
+  ;; .clj/.cljc and found 0 test namespaces after the .kotoba rename. This
+  ;; one loads the .kotoba sources itself and refuses (exit 2) to report a
+  ;; pass below the count README.md publishes.
   :test {:extra-paths ["test"]
-         :extra-deps {io.github.cognitect-labs/test-runner
-                      {:git/tag "v0.5.1" :git/sha "dfb30dd6605cb6c0efc275e1df1736f6e90d4d73"}}
-         :main-opts ["-m" "cognitect.test-runner"]}}}
+         :main-opts ["run_tests.kotoba"]}}}
