@@ -26,8 +26,12 @@
   always require human designer sign-off):
     4. :op :flag-safety-compliance-issue (always escalates).
     5. design proposals affecting material safety or regulatory compliance.
-    6. low confidence (< `confidence-floor`)."
-  (:require [design.store :as store]))
+    6. low confidence (< `confidence-floor`).
+    7. `:prepare-specification` that cites no `:standards`, or any
+       standard not in `design.facts/regulations`
+       (`:unrecognized-standard`, reported under `:escalations`)."
+  (:require [design.store :as store]
+            [design.facts :as facts]))
 
 (def confidence-floor 0.6)
 (def ^:private escalating-ops #{:flag-safety-compliance-issue})
@@ -48,10 +52,19 @@
 (defn- safety-concern? [{:keys [scope tags]}]
   (and scope tags (some safety-keywords tags)))
 
+(defn- escalation-reasons [proposal]
+  (let [standards (:standards proposal)]
+    (cond-> []
+      (and (= :prepare-specification (:op proposal))
+           (or (empty? standards)
+               (not-every? facts/recognized-standard? standards)))
+      (conj {:rule :unrecognized-standard
+             :detail (str "standards " (pr-str standards) " are not all in design.facts")}))))
+
 (defn check
   "Assess a proposal against `request`/`context`/`proposal` and a
   `store` implementing `design.store/Store`. Returns
-  `{:ok? bool :violations [...] :confidence n :hard? bool :escalate? bool}`."
+  `{:ok? bool :violations [...] :escalations [...] :confidence n :hard? bool :escalate? bool}`."
   [request context proposal store]
   (let [project-record (store/project store (:project-id request))
         hard (hard-violations {:proposal proposal} project-record)
@@ -59,9 +72,11 @@
         conf (or (:confidence proposal) 0.0)
         low? (< conf confidence-floor)
         escalating-op? (contains? escalating-ops (:op proposal))
-        safety? (and (not hard?) (safety-concern? proposal))]
-    {:ok? (and (not hard?) (not low?) (not escalating-op?) (not safety?))
+        safety? (and (not hard?) (safety-concern? proposal))
+        esc (escalation-reasons proposal)]
+    {:ok? (and (not hard?) (not low?) (not escalating-op?) (not safety?) (empty? esc))
      :violations hard
+     :escalations esc
      :confidence conf
      :hard? hard?
-     :escalate? (and (not hard?) (or low? escalating-op? safety?))}))
+     :escalate? (and (not hard?) (or low? escalating-op? safety? (boolean (seq esc))))}))

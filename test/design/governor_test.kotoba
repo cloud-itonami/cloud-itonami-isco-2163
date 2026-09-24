@@ -1,7 +1,8 @@
 (ns design.governor-test
   (:require [clojure.test :refer [deftest is testing]]
             [design.store :as store]
-            [design.governor :as governor]))
+            [design.governor :as governor]
+            [design.facts :as facts]))
 
 (defn- fresh-store []
   (let [st (store/mem-store)]
@@ -61,10 +62,46 @@
 
 (deftest escalates-on-low-confidence
   (let [st (fresh-store)
-        proposal {:op :prepare-specification :effect :propose :confidence 0.2 :stake :low}
+        ;; cites a recognized regulation so that confidence is the ONLY
+        ;; reason to escalate (otherwise :unrecognized-standard masks it).
+        proposal {:op :prepare-specification :effect :propose :confidence 0.2 :stake :low
+                  :standards [:us-16-cfr-1610]}
         v (governor/check {:project-id "proj-1"} {} proposal st)]
     (is (:escalate? v))
+    (is (empty? (:escalations v)))
     (is (not (:hard? v)))))
+
+(defn- spec-with [standards]
+  {:op :prepare-specification :effect :propose :confidence 0.9 :stake :low
+   :standards standards})
+
+(deftest ok-on-specification-citing-recognized-regulations
+  (let [v (governor/check {:project-id "proj-1"} {}
+                          (spec-with [:us-16-cfr-1610 :uk-si-1985-2043]) (fresh-store))]
+    (is (:ok? v))
+    (is (empty? (:escalations v)))
+    (is (not (:escalate? v)))))
+
+(deftest escalates-on-specification-without-standard
+  (let [v (governor/check {:project-id "proj-1"} {}
+                          {:op :prepare-specification :effect :propose :confidence 0.9 :stake :low}
+                          (fresh-store))]
+    (is (:escalate? v))
+    (is (not (:hard? v)))
+    (is (= [:unrecognized-standard] (mapv :rule (:escalations v))))))
+
+(deftest escalates-when-any-cited-standard-is-unrecognized
+  ;; boundary: one recognized + one not in design.facts is still escalated
+  (let [v (governor/check {:project-id "proj-1"} {}
+                          (spec-with [:us-16-cfr-1610 :made-up-standard]) (fresh-store))]
+    (is (:escalate? v))
+    (is (not (:ok? v)))
+    (is (= [:unrecognized-standard] (mapv :rule (:escalations v))))))
+
+(deftest every-cited-regulation-carries-a-fetched-url
+  (doseq [[k {:keys [code title url fetched]}] facts/regulations]
+    (is (and (string? code) (string? title) (string? fetched)) (str k))
+    (is (re-find #"^https://" url) (str k))))
 
 (deftest store-records-and-ledger-append-only
   (let [st (fresh-store)]

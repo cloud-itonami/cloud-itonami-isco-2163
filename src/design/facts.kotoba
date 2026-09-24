@@ -1,0 +1,59 @@
+(ns design.facts
+  "Product-safety regulations a `:prepare-specification` proposal may cite.
+
+  Before this catalog a `:prepare-specification` proposal needed to name
+  no regulation at all: `{:op :prepare-specification :effect :propose
+  :confidence 0.9}` for a registered project committed a specification
+  record that said nothing about which flammability, small-parts or
+  lead-paint rule the product was specified against, so nobody could
+  check the specification against anything. The governor now escalates
+  such a proposal (`:unrecognized-standard`) to the designer, who can
+  sign off on a rule this catalog does not yet list.
+
+  Every `:url` was fetched on `:fetched` and returned HTTP 200 from the
+  publishing authority itself (govinfo.gov for the US Code of Federal
+  Regulations, legislation.gov.uk for UK statutory instruments); each
+  `:title` is the heading read from that document, not recalled.
+  Sources that answered with a bot wall on the same day (ecfr.gov served a
+  'Request Access' page, eur-lex.europa.eu an empty 202, cpsc.gov a 403)
+  are not cited, because they could not be read.")
+
+(def regulations
+  "regulation keyword -> citation."
+  {:us-16-cfr-1610
+   {:code "16 CFR Part 1610"
+    :title "Standard for the Flammability of Clothing Textiles"
+    :url "https://www.govinfo.gov/content/pkg/CFR-2025-title16-vol2/pdf/CFR-2025-title16-vol2-part1610.pdf"
+    :fetched "2026-09-24"}
+   :us-16-cfr-1615
+   {:code "16 CFR Part 1615"
+    :title "Standard for the Flammability of Children's Sleepwear: Sizes 0 Through 6X (FF 3-71)"
+    :url "https://www.govinfo.gov/content/pkg/CFR-2025-title16-vol2/pdf/CFR-2025-title16-vol2-part1615.pdf"
+    :fetched "2026-09-24"}
+   :us-16-cfr-1303
+   {:code "16 CFR Part 1303"
+    :title "Ban of Lead-Containing Paint and Certain Consumer Products Bearing Lead-Containing Paint"
+    :url "https://www.govinfo.gov/content/pkg/CFR-2025-title16-vol2/pdf/CFR-2025-title16-vol2-part1303.pdf"
+    :fetched "2026-09-24"}
+   :us-16-cfr-1501
+   {:code "16 CFR Part 1501"
+    :title "Method for Identifying Toys and Other Articles Intended for Use by Children Under 3 Years of Age Which Present Choking, Aspiration, or Ingestion Hazards Because of Small Parts"
+    :url "https://www.govinfo.gov/content/pkg/CFR-2025-title16-vol2/pdf/CFR-2025-title16-vol2-part1501.pdf"
+    :fetched "2026-09-24"}
+   :uk-si-2005-1803
+   {:code "SI 2005/1803"
+    :title "The General Product Safety Regulations 2005"
+    :url "https://www.legislation.gov.uk/uksi/2005/1803/contents/made"
+    :fetched "2026-09-24"}
+   :uk-si-1985-2043
+   {:code "SI 1985/2043"
+    :title "The Nightwear (Safety) Regulations 1985"
+    :url "https://www.legislation.gov.uk/uksi/1985/2043/contents/made"
+    :fetched "2026-09-24"}
+   :uk-si-2011-1881
+   {:code "SI 2011/1881"
+    :title "The Toys (Safety) Regulations 2011"
+    :url "https://www.legislation.gov.uk/uksi/2011/1881/contents/made"
+    :fetched "2026-09-24"}})
+
+(defn recognized-standard? [standard] (contains? regulations standard))
