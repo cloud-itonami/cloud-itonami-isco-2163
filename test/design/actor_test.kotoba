@@ -50,3 +50,21 @@
     (is (nil? (get-in result [:state :record])))
     (is (empty? (store/records-of st "proj-1")))
     (is (= :hold (:disposition (:state result))))))
+
+(deftest commits-a-specification-citing-a-recognized-regulation
+  (let [st (fresh-store)
+        graph (actor/build-graph {:store st})
+        request {:project-id "proj-1" :op :prepare-specification :stake :low
+                 :standards [:us-16-cfr-1615]}
+        result (actor/run-request! graph request {} "thread-5")]
+    (is (= :done (:status result)))
+    (is (= [:us-16-cfr-1615] (get-in result [:state :record :payload :standards])))
+    (is (= 1 (count (store/records-of st "proj-1"))))))
+
+(deftest interrupts-a-specification-citing-no-regulation
+  (let [st (fresh-store)
+        graph (actor/build-graph {:store st})
+        request {:project-id "proj-1" :op :prepare-specification :stake :low}
+        result (actor/run-request! graph request {} "thread-6")]
+    (is (= :interrupted (:status result)))
+    (is (empty? (store/records-of st "proj-1")))))

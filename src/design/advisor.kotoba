@@ -14,6 +14,7 @@
     {:op :draft-design-concept|:prepare-specification|:flag-safety-compliance-issue|:request-client-review
      :effect :propose        ; the advisor NEVER issues production sign-offs or certifications
      :stake :low|:medium|:high
+     :standards [kw ...]     ; regulations a :prepare-specification is written against (design.facts)
      :confidence 0.0-1.0
      :rationale str}
   LLM parse failures always yield `:confidence 0.0` (never fabricate
@@ -28,8 +29,9 @@
   "Deterministic mock inference: reads the request's declared op/stake
   straight through (a stand-in for what an LLM would extract from free
   text), with a stake-derived confidence."
-  [_store {:keys [op stake] :as request}]
+  [_store {:keys [op stake standards] :as request}]
   {:op op
+   :standards standards
    :effect :propose
    :stake (or stake :low)
    :confidence (case (or stake :low) :high 0.7 :medium 0.85 :low 0.95)
