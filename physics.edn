@@ -1,0 +1,32 @@
+;; What this vertical's robot physically does, declared for
+;; kotoba.robotics.process (kotoba-lang/robotics). `kbb -M:physics` runs it.
+;;
+;; README "Robotics premise": a design-support robot prepares design
+;; concepts, specifications and safety compliance assessments for product and
+;; garment designers (ISCO 2163). The physical work behind them: pulling an ABS
+;; prototype coupon in tension to check the design strain, and lifting fabric
+;; rolls onto the cutting table.
+;;
+;; Every number without a cited source is marked `estimate` in its :basis.
+;; Replacing an estimate with a sourced value is this bot's growth work.
+{:physics/schema "itonami.physical-ai.spec.v1"
+ :repo "cloud-itonami/cloud-itonami-isco-2163"
+ :cases
+ [{:id :abs-coupon-tension
+   :kind :material
+   :procedure "test robot pulls an ABS prototype coupon (10 mm x 4 mm section) to the design load and records the strain"
+   :params {:length-m 0.08 :area-m2 4.0e-5 :youngs-modulus-pa 2.3e9 :yield-stress-pa 40.0e6
+            :hardening-pa 0.2e9 :density-kg-m3 1050.0}
+   :sweep {:param :max-force-n :values [400.0 800.0 1200.0 1500.0 1800.0]}
+   :quantity :final-strain
+   :limit {:max 0.02 :basis "estimate: 2 % taken as the allowable working strain for an ABS part under sustained load"}
+   :boundary {:lo 200.0 :hi 2000.0}}
+  {:id :fabric-roll-to-table
+   :kind :manipulator
+   :procedure "arm lifts a fabric roll from the rack onto the cutting-table unwinder"
+   :params {:l1-m 0.60 :l2-m 0.55 :m1-kg 8.0 :m2-kg 6.0
+            :from [0.60 -0.20] :to [0.70 0.30] :duration-s 3.0 :steps 500}
+   :sweep {:param :payload-kg :values [5.0 10.0 15.0 20.0 25.0]}
+   :quantity :peak-tau1-nm
+   :limit {:max 200.0 :basis "estimate: continuous shoulder torque of a 15-20 kg payload class industrial arm"}
+   :boundary {:lo 1.0 :hi 60.0}}]}
